@@ -3,7 +3,9 @@ syntax = "proto3";
 package helloworld;
 
 service Greeter {
-  rpc SayHello (HelloRequest) returns (HelloReply);
+  rpc SayHello(HelloRequest) returns (HelloReply);
+  rpc SayHelloStream(HelloRequest) returns (stream HelloReply);
+  rpc SendNamesStream(stream HelloRequest) returns (HelloReply);
 }
 
 message HelloRequest {
