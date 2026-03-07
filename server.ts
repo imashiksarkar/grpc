@@ -15,6 +15,7 @@ class GreeterController implements IGreeterController {
     const name = call.request.getName();
     const reply = new HelloReply();
     reply.setMessage(`Hello ${name}`);
+    reply.setVersion(1);
     callback(null, reply);
   };
 
@@ -26,6 +27,7 @@ class GreeterController implements IGreeterController {
       count++;
       const reply = new HelloReply();
       reply.setMessage(`Hello ${name} #${count}`);
+      // reply.setVersion(1);
       call.write(reply);
 
       if (count >= 5) {
