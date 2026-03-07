@@ -1,26 +1,24 @@
 import grpc from "@grpc/grpc-js";
-import {
-  GreeterService,
-  type IGreeterServer,
-} from "./generated/helloworld_grpc_pb.js";
-import { HelloRequest, HelloReply } from "./generated/helloworld_pb.js";
+import { GreeterService } from "./generated/helloworld_grpc_pb.js";
+import { HelloReply, HelloRequest } from "./generated/helloworld_pb.js";
 
-class GreeterController implements IGreeterServer {
+interface IGreeterController {
+  sayHello: grpc.handleUnaryCall<HelloRequest, HelloReply>;
+  sayHelloStream: grpc.handleServerStreamingCall<HelloRequest, HelloReply>;
+  sendNamesStream: grpc.handleClientStreamingCall<HelloRequest, HelloReply>;
+}
+
+class GreeterController implements IGreeterController {
   [method: string]: grpc.UntypedHandleCall;
 
-  sayHello: grpc.handleUnaryCall<HelloRequest, HelloReply> = (
-    call,
-    callback,
-  ) => {
+  sayHello: IGreeterController["sayHello"] = (call, callback) => {
     const name = call.request.getName();
     const reply = new HelloReply();
     reply.setMessage(`Hello ${name}`);
     callback(null, reply);
   };
 
-  sayHelloStream: grpc.handleServerStreamingCall<HelloRequest, HelloReply> = (
-    call,
-  ) => {
+  sayHelloStream: IGreeterController["sayHelloStream"] = (call) => {
     const name = call.request.getName();
     let count = 0;
 
@@ -37,10 +35,7 @@ class GreeterController implements IGreeterServer {
     }, 1000);
   };
 
-  sendNamesStream: grpc.handleClientStreamingCall<HelloRequest, HelloReply> = (
-    call,
-    callback,
-  ) => {
+  sendNamesStream: IGreeterController["sendNamesStream"] = (call, callback) => {
     const names: string[] = [];
 
     call.on("data", (req) => names.push(req.getName()));
