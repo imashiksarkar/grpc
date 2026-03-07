@@ -5,36 +5,29 @@ import {
 } from "./generated/helloworld_grpc_pb.js";
 import { HelloRequest, HelloReply } from "./generated/helloworld_pb.js";
 
-const PORT = 50051;
+class GreeterController implements IGreeterServer {
+  [method: string]: grpc.UntypedHandleCall;
 
-const server = new grpc.Server();
-
-const greeterService: IGreeterServer = {
-  // Unary
-  sayHello(
-    call: grpc.ServerUnaryCall<HelloRequest, HelloReply>,
-    callback: grpc.sendUnaryData<HelloReply>,
-  ) {
+  sayHello: grpc.handleUnaryCall<HelloRequest, HelloReply> = (
+    call,
+    callback,
+  ) => {
     const name = call.request.getName();
-
     const reply = new HelloReply();
-    reply.setMessage(`Hello, ${name}`);
-
+    reply.setMessage(`Hello ${name}`);
     callback(null, reply);
-  },
+  };
 
-  // Server stream
-  sayHelloStream(call: grpc.ServerWritableStream<HelloRequest, HelloReply>) {
+  sayHelloStream: grpc.handleServerStreamingCall<HelloRequest, HelloReply> = (
+    call,
+  ) => {
     const name = call.request.getName();
-
     let count = 0;
 
     const interval = setInterval(() => {
       count++;
-
       const reply = new HelloReply();
       reply.setMessage(`Hello ${name} #${count}`);
-
       call.write(reply);
 
       if (count >= 5) {
@@ -42,35 +35,33 @@ const greeterService: IGreeterServer = {
         call.end();
       }
     }, 1000);
-  },
+  };
 
-  // Client stream
-  sendNamesStream(
-    call: grpc.ServerReadableStream<HelloRequest, HelloReply>,
-    callback: grpc.sendUnaryData<HelloReply>,
-  ) {
+  sendNamesStream: grpc.handleClientStreamingCall<HelloRequest, HelloReply> = (
+    call,
+    callback,
+  ) => {
     const names: string[] = [];
 
-    call.on("data", (req: HelloRequest) => {
-      names.push(req.getName());
-    });
-
+    call.on("data", (req) => names.push(req.getName()));
     call.on("end", () => {
       const reply = new HelloReply();
       reply.setMessage(`Hello ${names.join(", ")}`);
-
       callback(null, reply);
     });
-  },
-};
+  };
+}
 
-server.addService(GreeterService, greeterService);
+const server = new grpc.Server();
+const controller = new GreeterController();
+
+server.addService(GreeterService, controller);
 
 server.bindAsync(
-  `0.0.0.0:${PORT}`,
+  "0.0.0.0:50051",
   grpc.ServerCredentials.createInsecure(),
   (err, port) => {
     if (err) throw err;
-    console.log(`gRPC server running at http://0.0.0.0:${port}`);
+    console.log(`Server running on port ${port}`);
   },
 );

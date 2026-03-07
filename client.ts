@@ -3,56 +3,64 @@ import grpc from "@grpc/grpc-js";
 import { GreeterClient } from "./generated/helloworld_grpc_pb.js";
 import { HelloRequest } from "./generated/helloworld_pb.js";
 
-const client = new GreeterClient(
-  "localhost:50051",
-  grpc.credentials.createInsecure(),
-);
+class Client {
+  private readonly client: GreeterClient;
 
-const sayHello = () => {
-  const req = new HelloRequest();
-  req.setName("Ashik");
+  constructor() {
+    this.client = new GreeterClient(
+      "localhost:50051",
+      grpc.credentials.createInsecure(),
+    );
+  }
 
-  client.sayHello(req, (err, res) => {
-    if (err) throw err;
+  sayHello = () => {
+    const req = new HelloRequest();
+    req.setName("Ashik");
 
-    console.log(res.getMessage());
-  });
-};
+    this.client.sayHello(req, (err, res) => {
+      if (err) throw err;
 
-const sayHelloStream = () => {
-  const req = new HelloRequest();
-  req.setName("Ashik");
+      console.log(res.getMessage());
+    });
+  };
 
-  const stream = client.sayHelloStream(req);
+  sayHelloStream = () => {
+    const req = new HelloRequest();
+    req.setName("Ashik");
 
-  stream.on("data", (res) => {
-    console.log(res.getMessage());
-  });
+    const stream = this.client.sayHelloStream(req);
 
-  stream.on("end", () => {
-    console.log("stream ended");
-  });
-};
+    stream.on("data", (res) => {
+      console.log(res.getMessage());
+    });
 
-const sendNamesStream = () => {
-  const stream = client.sendNamesStream((err, res) => {
-    if (err) throw err;
+    stream.on("end", () => {
+      console.log("stream ended");
+    });
+  };
 
-    console.log(res.getMessage());
-  });
+  sendNamesStream = () => {
+    const stream = this.client.sendNamesStream((err, res) => {
+      if (err) throw err;
 
-  const r1 = new HelloRequest();
-  r1.setName("Alice");
+      console.log(res.getMessage());
+    });
 
-  const r2 = new HelloRequest();
-  r2.setName("Bob");
+    const r1 = new HelloRequest();
+    r1.setName("Alice");
 
-  stream.write(r1);
-  stream.write(r2);
+    const r2 = new HelloRequest();
+    r2.setName("Bob");
 
-  stream.end();
-};
+    stream.write(r1);
+    stream.write(r2);
 
-// sayHello()
-// sayHelloStream()
-// sendNamesStream();
+    stream.end();
+  };
+}
+
+const client = new Client();
+
+client.sayHello();
+client.sayHelloStream();
+client.sendNamesStream();
